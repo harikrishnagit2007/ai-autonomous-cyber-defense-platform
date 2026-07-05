@@ -92,7 +92,7 @@ async function startServer() {
     const expiry = Date.now() + 3600000 * 24 * 7;
     const sessionToken = Buffer.from(`${newUser.id}:${newUser.email}:${expiry}`).toString("base64");
 
-    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=Lax`);
+    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=None; Secure`);
     res.status(201).json({
       message: "Registration successful.",
       token: sessionToken,
@@ -138,7 +138,7 @@ async function startServer() {
     const expiry = Date.now() + 3600000 * 24 * 7;
     const sessionToken = Buffer.from(`${user.id}:${user.email}:${expiry}`).toString("base64");
 
-    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=Lax`);
+    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=None; Secure`);
     res.json({
       message: "Login successful.",
       token: sessionToken,
@@ -154,7 +154,7 @@ async function startServer() {
 
   // Logout
   app.post("/api/auth/logout", (req: Request, res: Response) => {
-    res.setHeader("Set-Cookie", "session-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax");
+    res.setHeader("Set-Cookie", "session-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=None; Secure");
     res.json({ message: "Logout successful." });
   });
 
@@ -246,8 +246,44 @@ async function startServer() {
     const expiry = Date.now() + 3600000 * 24 * 7;
     const sessionToken = Buffer.from(`${user.id}:${user.email}:${expiry}`).toString("base64");
 
-    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=Lax`);
-    res.redirect("/dashboard?token=" + sessionToken);
+    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=None; Secure`);
+    res.send(`
+      <html>
+        <head>
+          <title>SSO Redirecting...</title>
+          <style>
+            body { background: #05070a; color: #38bdf8; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .spinner { border: 3px solid rgba(56, 189, 248, 0.1); border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-bottom: 12px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .content { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="content">
+            <div class="spinner"></div>
+            <div>Authenticating secure session. Transferring tokens...</div>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'OAUTH_AUTH_SUCCESS',
+                token: '${sessionToken}',
+                user: ${JSON.stringify({
+                  id: user.id,
+                  email: user.email,
+                  fullName: user.fullName,
+                  company: user.company,
+                  avatarUrl: user.avatarUrl,
+                })}
+              }, '*');
+              window.close();
+            } else {
+              window.location.href = '/dashboard?token=${sessionToken}';
+            }
+          </script>
+        </body>
+      </html>
+    `);
   });
 
   // GitHub OAuth Login Bypass
@@ -272,8 +308,44 @@ async function startServer() {
     const expiry = Date.now() + 3600000 * 24 * 7;
     const sessionToken = Buffer.from(`${user.id}:${user.email}:${expiry}`).toString("base64");
 
-    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=Lax`);
-    res.redirect("/dashboard?token=" + sessionToken);
+    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=None; Secure`);
+    res.send(`
+      <html>
+        <head>
+          <title>SSO Redirecting...</title>
+          <style>
+            body { background: #05070a; color: #38bdf8; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .spinner { border: 3px solid rgba(56, 189, 248, 0.1); border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-bottom: 12px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .content { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="content">
+            <div class="spinner"></div>
+            <div>Authenticating secure session. Transferring tokens...</div>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'OAUTH_AUTH_SUCCESS',
+                token: '${sessionToken}',
+                user: ${JSON.stringify({
+                  id: user.id,
+                  email: user.email,
+                  fullName: user.fullName,
+                  company: user.company,
+                  avatarUrl: user.avatarUrl,
+                })}
+              }, '*');
+              window.close();
+            } else {
+              window.location.href = '/dashboard?token=${sessionToken}';
+            }
+          </script>
+        </body>
+      </html>
+    `);
   });
 
   // Microsoft OAuth Login Bypass
@@ -298,8 +370,44 @@ async function startServer() {
     const expiry = Date.now() + 3600000 * 24 * 7;
     const sessionToken = Buffer.from(`${user.id}:${user.email}:${expiry}`).toString("base64");
 
-    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=Lax`);
-    res.redirect("/dashboard?token=" + sessionToken);
+    res.setHeader("Set-Cookie", `session-token=${sessionToken}; Path=/; HttpOnly; Max-Age=${3600 * 24 * 7}; SameSite=None; Secure`);
+    res.send(`
+      <html>
+        <head>
+          <title>SSO Redirecting...</title>
+          <style>
+            body { background: #05070a; color: #38bdf8; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .spinner { border: 3px solid rgba(56, 189, 248, 0.1); border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-bottom: 12px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .content { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="content">
+            <div class="spinner"></div>
+            <div>Authenticating secure session. Transferring tokens...</div>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'OAUTH_AUTH_SUCCESS',
+                token: '${sessionToken}',
+                user: ${JSON.stringify({
+                  id: user.id,
+                  email: user.email,
+                  fullName: user.fullName,
+                  company: user.company,
+                  avatarUrl: user.avatarUrl,
+                })}
+              }, '*');
+              window.close();
+            } else {
+              window.location.href = '/dashboard?token=${sessionToken}';
+            }
+          </script>
+        </body>
+      </html>
+    `);
   });
 
 

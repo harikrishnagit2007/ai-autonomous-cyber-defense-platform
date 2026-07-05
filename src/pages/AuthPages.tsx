@@ -39,6 +39,48 @@ export default function AuthPages({ initialMode, onAuthSuccess, onNavigate }: Au
     clearStatus();
   };
 
+  // SSO Popup Handler
+  const handleSSO = (provider: "google" | "github" | "microsoft", e: React.MouseEvent) => {
+    e.preventDefault();
+    clearStatus();
+
+    const width = 500;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    const popup = window.open(
+      `/api/auth/${provider}`,
+      `${provider}_oauth_popup`,
+      `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+    );
+
+    if (!popup) {
+      setError("SSO Popup was blocked by your browser. Please allow popups for this security platform.");
+    }
+  };
+
+  // Listen to popup messages for cross-origin SSO
+  React.useEffect(() => {
+    const handleSSOMessage = (event: MessageEvent) => {
+      // Allow local and preview domain origins
+      const origin = event.origin;
+      if (!origin.endsWith(".run.app") && !origin.includes("localhost") && !origin.includes("127.0.0.1")) {
+        return;
+      }
+
+      if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
+        setSuccess("SSO Authentication successful. Establishing core session...");
+        setTimeout(() => {
+          onAuthSuccess(event.data.token, event.data.user);
+        }, 1200);
+      }
+    };
+
+    window.addEventListener("message", handleSSOMessage);
+    return () => window.removeEventListener("message", handleSSOMessage);
+  }, [onAuthSuccess]);
+
   // Submit Register
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,8 +524,8 @@ export default function AuthPages({ initialMode, onAuthSuccess, onNavigate }: Au
             Cryptographic Single Sign On
           </span>
           <div className="grid grid-cols-3 gap-2">
-            <a 
-              href="/api/auth/google"
+            <button 
+              onClick={(e) => handleSSO("google", e)}
               id="btn-sso-google"
               className="flex items-center justify-center rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 py-2 text-xs text-slate-300 transition-colors cursor-pointer"
               title="Continue with Google Workspace"
@@ -494,9 +536,9 @@ export default function AuthPages({ initialMode, onAuthSuccess, onNavigate }: Au
                 <path fill="#FBBC05" d="M5.24 10.55A7.19 7.19 0 0 1 5 12c0 .51.04 1.01.12 1.5l-3.85 2.99A11.94 11.94 0 0 1 1 12c0-1.58.31-3.09.87-4.49l3.37 3.04z"/>
                 <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.76-2.92c-1.04.7-2.38 1.12-4.2 1.12-3.25 0-5.84-1.76-6.76-4.51H1.39v2.99A11.94 11.94 0 0 0 12 23z"/>
               </svg>
-            </a>
-            <a 
-              href="/api/auth/github"
+            </button>
+            <button 
+              onClick={(e) => handleSSO("github", e)}
               id="btn-sso-github"
               className="flex items-center justify-center rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 py-2 text-xs text-slate-300 transition-colors cursor-pointer"
               title="Continue with GitHub DevOps"
@@ -504,9 +546,9 @@ export default function AuthPages({ initialMode, onAuthSuccess, onNavigate }: Au
               <svg className="h-4 w-4 fill-current shrink-0 text-slate-300" viewBox="0 0 24 24">
                 <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
               </svg>
-            </a>
-            <a 
-              href="/api/auth/microsoft"
+            </button>
+            <button 
+              onClick={(e) => handleSSO("microsoft", e)}
               id="btn-sso-microsoft"
               className="flex items-center justify-center rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 py-2 text-xs text-slate-300 transition-colors cursor-pointer"
               title="Continue with Microsoft Azure"
@@ -517,7 +559,7 @@ export default function AuthPages({ initialMode, onAuthSuccess, onNavigate }: Au
                 <path fill="#00A4EF" d="M1 13h10v10H1z"/>
                 <path fill="#FFB900" d="M13 13h10v10H13z"/>
               </svg>
-            </a>
+            </button>
           </div>
         </div>
 
