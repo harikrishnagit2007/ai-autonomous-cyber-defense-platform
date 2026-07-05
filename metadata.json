@@ -1,0 +1,6 @@
+{
+  "name": "AI Autonomous Cyber Defense Platform",
+  "description": "An advanced, enterprise-grade cybersecurity platform powered by an AI Agent that coordinates real-time website monitoring, threat detection, vulnerability analysis, risk assessment, and active automated notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
